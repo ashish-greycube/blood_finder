@@ -1,0 +1,49 @@
+# --- Dependencies ---
+node_modules/
+.pnpm-store/
+
+# --- Expo & Metro ---
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+.metro-health-check*
+app-example/
+
+# --- Native Folders ---
+/ios
+/android
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# --- Styling & Configuration (Gluestack/Tailwind Junk) ---
+tailwind.config.js
+global.css
+nativewind-env.d.ts
+
+# --- Debug & Logs ---
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# --- Environment & Local Files ---
+.env*.local
+*.tsbuildinfo
+*.pem
+
+# --- Editor & OS Specific ---
+.vscode/
+.history/
+.idea/
+*.code-workspace
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+CLAUDE.md
