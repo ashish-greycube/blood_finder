@@ -1,4 +1,4 @@
-import { useURLContext } from "@/context/URLContext";
+import { BASE_URI } from "@/constants/constant";
 import {
     FrappeProvider as SDKProvider,
     useFrappeAuth,
@@ -16,10 +16,9 @@ const FrappeContext = createContext(null);
 const FrappeProvider = ({ children }) => {
 
   const { accessToken } = useContext(AuthContext)
-  const { url } = useURLContext();
   return (
     <SDKProvider
-      url={url}
+      url={BASE_URI}
       tokenParams={{
         useToken: true,
         type: "bearer",

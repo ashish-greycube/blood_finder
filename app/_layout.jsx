@@ -1,8 +1,9 @@
 import { ThemeProvider } from "@/context/ThemeContext";
 import { AuthContext, AuthProvider } from "@/services/auth";
+import { FrappeProvider } from "@/services/backend";
 import { config } from "@gluestack-ui/config";
 import { GluestackUIProvider } from "@gluestack-ui/themed";
-import { useRouter, useSegments, Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { useContext, useEffect } from "react";
 
 function NavigationGuard() {
@@ -26,12 +27,14 @@ export default function RootLayout() {
     <GluestackUIProvider config={config}>
       <ThemeProvider>
         <AuthProvider>
-          <NavigationGuard />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-            }}
-          />
+          <FrappeProvider>
+            <NavigationGuard />
+            <Stack
+              screenOptions={{
+                headerShown: false,
+              }}
+            />
+          </FrappeProvider>
         </AuthProvider>
       </ThemeProvider>
     </GluestackUIProvider>

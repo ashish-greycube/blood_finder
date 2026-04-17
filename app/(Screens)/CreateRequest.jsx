@@ -1,5 +1,6 @@
 import { COLORS, RADII, SPACING, TYPOGRAPHY } from '@/constants/theme';
 import { ThemeContext } from '@/context/ThemeContext';
+import { AuthContext } from '@/services/auth';
 import { Entypo, Feather } from '@expo/vector-icons';
 import {
   Box,
@@ -20,6 +21,7 @@ import {
   Text,
   VStack,
 } from '@gluestack-ui/themed';
+import { FrappeContext as fcx } from 'frappe-react-sdk';
 import React, { useContext, useState } from 'react';
 import {
   Dimensions,
@@ -35,8 +37,7 @@ const { width } = Dimensions.get('window');
 const FORM_WIDTH = Math.min(width - SPACING.xl * 2, 480);
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-const URGENCY_LEVELS = ['Critical', 'High', 'Medium', 'Low'];
-const STATUS_OPTIONS = ['Open', 'Fulfilled', 'Cancelled'];
+const URGENCY_LEVELS = ['Critical','Standard'];
 
 const ORB_COLORS = { o1: '#8B0000', o2: '#1565C0', o3: '#66BB6A', o4: '#CE93D8' };
 
@@ -52,13 +53,14 @@ const CreateRequestScreen = () => {
   const { isDark } = useContext(ThemeContext);
   const theme = isDark ? COLORS.dark : COLORS.light;
 
-  const [finder, setFinder] = useState('');
+  const { db } = useContext(fcx);
+  const { userInfo } = useContext(AuthContext)
+  const [finder, setFinder] = useState();
   const [contactNumber, setContactNumber] = useState('');
   const [bloodGroup, setBloodGroup] = useState('');
   const [requiredUnits, setRequiredUnits] = useState('');
   const [hospital, setHospital] = useState('');
   const [urgencyLevel, setUrgencyLevel] = useState('');
-  const [status, setStatus] = useState('Open');
   const [requestTime, setRequestTime] = useState('');
   const [formError, setFormError] = useState('');
 
@@ -67,12 +69,27 @@ const CreateRequestScreen = () => {
   const clearError = () => { if (formError) setFormError(''); };
 
   const handleSubmit = () => {
-    if (!finder.trim() || !contactNumber.trim() || !bloodGroup || !requiredUnits.trim() || !urgencyLevel) {
-      setFormError('Please fill all required fields before submitting.');
-      return;
-    }
+    // if (!contactNumber.trim() || !bloodGroup || !requiredUnits.trim() || !urgencyLevel) {
+    //   setFormError('Please fill all required fields before submitting.');
+    //   return;
+    // }
     setFormError('');
-    console.log('Create Request:', { finder, contactNumber, bloodGroup, requiredUnits, hospital, urgencyLevel, status, requestTime });
+
+    db.getValue('Doner_Finder', 'name', [['user_id', '=', `${userInfo.name}`]])
+      .then((res) => {
+        let name = res.message.name
+        return db.createDoc('Blood Request', {
+          "finder_name" : `${name}`,
+          "contact_number" : `+91-${contactNumber}`,
+          "blood_group" : `${bloodGroup}`,
+          "required_units" : `${requiredUnits}`,
+          "hospital" : `${hospital}`,
+          "urgency_level" : `${urgencyLevel}`,
+          "request_time" : `${requestTime}`
+        }).then((res)=>{console.log(res)})
+      })
+      .catch((error) => console.error(error));
+
   };
 
   return (
@@ -112,9 +129,9 @@ const CreateRequestScreen = () => {
                 <FieldLabel label="Finder" required theme={theme} />
                 <Input variant="outline" style={[styles.inputWrapper, { backgroundColor: theme.inputFieldBg, borderColor: theme.inputFieldBorder }]}>
                   <InputField
-                    placeholder="Enter finder name"
+                    $disabled={true}
                     placeholderTextColor={theme.placeholderColor}
-                    value={finder}
+                    value={userInfo.given_name}
                     onChangeText={(v) => { setFinder(v); clearError(); }}
                     color={theme.inputTextColor}
                     fontSize={TYPOGRAPHY.base}
@@ -224,32 +241,6 @@ const CreateRequestScreen = () => {
                       </SelectDragIndicatorWrapper>
                       {URGENCY_LEVELS.map((u) => (
                         <SelectItem key={u} label={u} value={u} style={styles.selectItem} _text={{ color: theme.inputTextColor }} />
-                      ))}
-                    </SelectContent>
-                  </SelectPortal>
-                </Select>
-              </VStack>
-
-              {/* Status (optional) */}
-              <VStack space="$xs">
-                <FieldLabel label="Status" theme={theme} />
-                <Select onValueChange={setStatus} selectedValue={status}>
-                  <SelectTrigger variant="outline" style={[styles.selectTrigger, { backgroundColor: theme.inputFieldBg, borderColor: theme.inputFieldBorder }]}>
-                    <SelectInput
-                      placeholder="Select status"
-                      placeholderTextColor={theme.placeholderColor}
-                      style={[styles.selectInput, { color: theme.inputTextColor }]}
-                    />
-                    <SelectIcon as={Entypo} name="chevron-down" size="md" color={theme.chevronColor} />
-                  </SelectTrigger>
-                  <SelectPortal>
-                    <SelectBackdrop />
-                    <SelectContent style={[styles.selectContent, { backgroundColor: theme.dropdownBg, borderColor: theme.dropdownBorder }]}>
-                      <SelectDragIndicatorWrapper>
-                        <SelectDragIndicator />
-                      </SelectDragIndicatorWrapper>
-                      {STATUS_OPTIONS.map((s) => (
-                        <SelectItem key={s} label={s} value={s} style={styles.selectItem} _text={{ color: theme.inputTextColor }} />
                       ))}
                     </SelectContent>
                   </SelectPortal>

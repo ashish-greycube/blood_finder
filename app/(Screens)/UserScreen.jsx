@@ -61,6 +61,7 @@ const InfoRow = ({ label, value, theme, isLast }) => (
 const UserScreen = () => {
   const { isDark } = useContext(ThemeContext);
   const { userInfo, logout } = useContext(AuthContext);
+  console.log(userInfo)
   const theme = isDark ? COLORS.dark : COLORS.light;
   const router = useRouter();
 
@@ -120,8 +121,8 @@ const UserScreen = () => {
                 <AvatarFallbackText style={{ color: '#FFF', fontSize: TYPOGRAPHY.xl, fontWeight: TYPOGRAPHY.bold }}>
                   {initials}
                 </AvatarFallbackText>
-                {profile.image ? (
-                  <AvatarImage source={{ uri: profile.image }} alt="avatar" />
+                {profile.picture ? (
+                  <AvatarImage source={{ uri: profile.picture }} alt="avatar" />
                 ) : null}
               </Avatar>
             </View>
