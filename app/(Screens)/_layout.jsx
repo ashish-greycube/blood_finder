@@ -1,9 +1,10 @@
 import { COLORS, TYPOGRAPHY } from '@/constants/theme';
 import { ThemeContext } from '@/context/ThemeContext';
+import { AuthContext } from '@/services/auth';
 import ThemeToggle from '@/components/ThemeToggle';
 import Feather from '@expo/vector-icons/Feather';
 import { Stack, useRouter } from 'expo-router';
-import React, { useContext } from 'react';
+import React, { useCallback, useContext, useRef, useEffect } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import useNotification from '@/hooks/useNotification';
@@ -63,7 +64,20 @@ const CustomHeader = ({ title, canGoBack }) => {
 };
 
 export default function ScreensLayout() {
-  useNotification()
+  const { userInfo, getFrappeClient } = useContext(AuthContext);
+
+  const userInfoRef = useRef(userInfo);
+  useEffect(() => { userInfoRef.current = userInfo; }, [userInfo]);
+
+  const saveFcmToken = useCallback((token) => {
+    const info = userInfoRef.current;
+    if (!info?.name) return;
+    const frappe = getFrappeClient();
+    const db = frappe.db();
+    db.updateDoc('User', info.name, { fcm_token: token }).catch(() => {});
+  }, [getFrappeClient]);
+
+  useNotification(saveFcmToken)
   return (
     <Stack
       screenOptions={{
