@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "935722927593",
+    "project_id": "blood-finder-gecm",
+    "storage_bucket": "blood-finder-gecm.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:935722927593:android:018183d89aff6268293778",
+        "android_client_info": {
+          "package_name": "com.milan2335.BloodFinder"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA2nwI9QBgIzNuP_yofJTWb6cdGVTA1-8E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

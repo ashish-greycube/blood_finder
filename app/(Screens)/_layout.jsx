@@ -6,7 +6,7 @@ import { Stack, useRouter } from 'expo-router';
 import React, { useContext } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
+import useNotification from '@/hooks/useNotification';
 const BloodLogo = () => (
   <View style={styles.bloodLogoCircle}>
     <Text style={styles.bloodEmoji}>🩸</Text>
@@ -63,13 +63,14 @@ const CustomHeader = ({ title, canGoBack }) => {
 };
 
 export default function ScreensLayout() {
+  useNotification()
   return (
     <Stack
       screenOptions={{
-        header: ({ options, navigation }) => (
+        header: ({ options, navigation, route }) => (
           <CustomHeader
             title={options.title ?? 'Blood Finder'}
-            canGoBack={navigation.canGoBack()}
+            canGoBack={navigation.canGoBack() && route.name !== 'MainScreen'}
           />
         ),
       }}

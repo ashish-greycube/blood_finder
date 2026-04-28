@@ -22,9 +22,13 @@ import {
   VStack,
 } from '@gluestack-ui/themed';
 import { FrappeContext as fcx } from 'frappe-react-sdk';
+import { useFrappe } from '@/services/backend';
 import React, { useContext, useState } from 'react';
 import {
+  Alert,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -54,6 +58,8 @@ const CreateRequestScreen = () => {
   const theme = isDark ? COLORS.dark : COLORS.light;
 
   const { db } = useContext(fcx);
+  const { useGetDocList } = useFrappe();
+  const { data: hospitalDocs } = useGetDocList('Hospital', { fields: ['name', 'hospital_name'], limit: 100 });
   const { userInfo } = useContext(AuthContext)
   const [finder, setFinder] = useState();
   const [contactNumber, setContactNumber] = useState('');
@@ -61,34 +67,55 @@ const CreateRequestScreen = () => {
   const [requiredUnits, setRequiredUnits] = useState('');
   const [hospital, setHospital] = useState('');
   const [urgencyLevel, setUrgencyLevel] = useState('');
-  const [requestTime, setRequestTime] = useState('');
   const [formError, setFormError] = useState('');
 
   const accentColor = '#66BB6A';
 
+
   const clearError = () => { if (formError) setFormError(''); };
 
-  const handleSubmit = () => {
-    // if (!contactNumber.trim() || !bloodGroup || !requiredUnits.trim() || !urgencyLevel) {
-    //   setFormError('Please fill all required fields before submitting.');
-    //   return;
-    // }
+  const resetForm = () => {
+    setContactNumber('');
+    setBloodGroup('');
+    setRequiredUnits('');
+    setHospital('');
+    setUrgencyLevel('');
     setFormError('');
+  };
 
+  const submitRequest = () => {
+    setFormError('');
     db.getValue('Doner_Finder', 'name', [['user_id', '=', `${userInfo.name}`]])
       .then((res) => {
-        let name = res.message.name
+        const name = res.message.name;
         return db.createDoc('Blood Request', {
-          "finder_name" : `${name}`,
+          "finder_name" : name,
           "contact_number" : `+91-${contactNumber}`,
-          "blood_group" : `${bloodGroup}`,
-          "required_units" : `${requiredUnits}`,
-          "hospital" : `${hospital}`,
-          "urgency_level" : `${urgencyLevel}`,
-          "request_time" : `${requestTime}`
-        }).then((res)=>{console.log(res)})
+          "blood_group" : bloodGroup,
+          "required_units" : requiredUnits,
+          "hospital" : hospital,
+          "urgency_level" : urgencyLevel,
+          "request_time" : new Date().toISOString().slice(0, 19).replace('T', ' ')
+        });
       })
-      .catch((error) => console.error(error));
+      .then(() => {
+        resetForm();
+        Alert.alert('Request Submitted', 'Your blood request has been created successfully.');
+      })
+      .catch(() => {
+        Alert.alert('Submission Failed', 'Something went wrong. Please try again.');
+      });
+  };
+
+  const handleSubmit = () => {
+    Alert.alert(
+      'Confirm Request',
+      `Submit a ${urgencyLevel || 'standard'} request for ${requiredUnits || '?'} unit(s) of ${bloodGroup || '?'} blood?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Submit', onPress: submitRequest },
+      ]
+    );
 
   };
 
@@ -102,6 +129,10 @@ const CreateRequestScreen = () => {
       <View style={[styles.orb, { backgroundColor: ORB_COLORS.o3, opacity: theme.orbOpacity3, bottom: 140, right: -10, width: 130, height: 130 }]} />
       <View style={[styles.orb, { backgroundColor: ORB_COLORS.o4, opacity: theme.orbOpacity4, top: 300, left: -60, width: 180, height: 180 }]} />
 
+      <KeyboardAvoidingView
+        style={styles.safeArea}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
       <SafeAreaView style={styles.safeArea}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -127,13 +158,11 @@ const CreateRequestScreen = () => {
               {/* Finder */}
               <VStack space="$xs">
                 <FieldLabel label="Finder" required theme={theme} />
-                <Input variant="outline" style={[styles.inputWrapper, { backgroundColor: theme.inputFieldBg, borderColor: theme.inputFieldBorder }]}>
+                <Input isReadOnly variant="outline" style={[styles.inputWrapper, { backgroundColor: theme.inputFieldBg, borderColor: theme.inputFieldBorder }]}>
                   <InputField
-                    $disabled={true}
-                    placeholderTextColor={theme.placeholderColor}
+                    editable={false}
                     value={userInfo.given_name}
-                    onChangeText={(v) => { setFinder(v); clearError(); }}
-                    color={theme.inputTextColor}
+                    color={theme.textMuted}
                     fontSize={TYPOGRAPHY.base}
                     style={styles.inputField}
                   />
@@ -208,17 +237,27 @@ const CreateRequestScreen = () => {
               {/* Hospital (optional) */}
               <VStack space="$xs">
                 <FieldLabel label="Hospital" theme={theme} />
-                <Input variant="outline" style={[styles.inputWrapper, { backgroundColor: theme.inputFieldBg, borderColor: theme.inputFieldBorder }]}>
-                  <InputField
-                    placeholder="Enter hospital name"
-                    placeholderTextColor={theme.placeholderColor}
-                    value={hospital}
-                    onChangeText={setHospital}
-                    color={theme.inputTextColor}
-                    fontSize={TYPOGRAPHY.base}
-                    style={styles.inputField}
-                  />
-                </Input>
+                <Select onValueChange={setHospital} selectedValue={hospital}>
+                  <SelectTrigger variant="outline" style={[styles.selectTrigger, { backgroundColor: theme.inputFieldBg, borderColor: theme.inputFieldBorder }]}>
+                    <SelectInput
+                      placeholder="Select hospital"
+                      placeholderTextColor={theme.placeholderColor}
+                      style={[styles.selectInput, { color: theme.inputTextColor }]}
+                    />
+                    <SelectIcon as={Entypo} name="chevron-down" size="md" color={theme.chevronColor} />
+                  </SelectTrigger>
+                  <SelectPortal>
+                    <SelectBackdrop />
+                    <SelectContent style={[styles.selectContent, { backgroundColor: theme.dropdownBg, borderColor: theme.dropdownBorder }]}>
+                      <SelectDragIndicatorWrapper>
+                        <SelectDragIndicator />
+                      </SelectDragIndicatorWrapper>
+                      {(hospitalDocs ?? []).map((h) => (
+                        <SelectItem key={h.name} label={h.hospital_name} value={h.name} style={styles.selectItem} _text={{ color: theme.inputTextColor }} />
+                      ))}
+                    </SelectContent>
+                  </SelectPortal>
+                </Select>
               </VStack>
 
               {/* Urgency Level */}
@@ -247,23 +286,6 @@ const CreateRequestScreen = () => {
                 </Select>
               </VStack>
 
-              {/* Request Time (optional) */}
-              <VStack space="$xs">
-                <FieldLabel label="Request Time" theme={theme} />
-                <Input variant="outline" style={[styles.inputWrapper, { backgroundColor: theme.inputFieldBg, borderColor: theme.inputFieldBorder }]}>
-                  <InputField
-                    placeholder="YYYY-MM-DD HH:MM"
-                    placeholderTextColor={theme.placeholderColor}
-                    value={requestTime}
-                    onChangeText={setRequestTime}
-                    color={theme.inputTextColor}
-                    fontSize={TYPOGRAPHY.base}
-                    style={styles.inputField}
-                  />
-                </Input>
-                <Text style={[styles.timezoneHint, { color: theme.fieldLabelColor }]}>Asia/Kolkata</Text>
-              </VStack>
-
             </VStack>
           </View>
 
@@ -288,6 +310,7 @@ const CreateRequestScreen = () => {
 
         </ScrollView>
       </SafeAreaView>
+      </KeyboardAvoidingView>
     </View>
   );
 };
